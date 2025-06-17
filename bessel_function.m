@@ -11,6 +11,6 @@ y3 = besselj(n3, x);
 plot(x, y1, 'b-', x, y2, 'r--', x, y3, 'g-.');
 xlabel('x');
 ylabel('J_n(x)');
-title('Bessel 函數');
+title('Bessel function');
 legend(['J_' num2str(n1)], ['J_' num2str(n2)], ['J_' num2str(n3)]);
 grid on;

@@ -28,9 +28,3 @@ end
 
 fprintf('解碼後位元 b_k_hat: \n');
 disp(decoded_b_k);
-
-if isequal(b_k, decoded_b_k)
-    disp('解碼成功，與原始輸入位元完全相同。');
-else
-    disp('解碼失敗，結果不符。');
-end

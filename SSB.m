@@ -1,66 +1,59 @@
-f1 = 1;          % 訊息信號的基頻
-fs = 100;        % 取樣頻率
-T = 5;
-t = 0:1/fs:T;
-fc = 10;        % 載波頻率
+%using signal processing toolbox
+f1 = 1; 
+t = -2:0.001:2; 
 
-mt = cos(2*pi*f1*t) - 0.4*cos(4*pi*f1*t) + 0.9*cos(6*pi*f1*t);
+m_t = cos(2*pi*f1*t) - 0.4*cos(4*pi*f1*t) + 0.9*cos(6*pi*f1*t);
+m_hilbert = imag(hilbert(m_t));
+fc = 10 * max([f1, 2*f1, 3*f1]); 
 
-order = 50;
-half_order = floor(order/2);
-impulse_response = zeros(1, order+1);
-for n = 1:order+1
-    if n ~= half_order + 1
-        impulse_response(n) = 1/(pi*(n - (half_order + 1)));
-    end
-end
-
-N = order + 1;
-window = 0.54 - 0.46 * cos(2*pi*(0:N-1)/(N-1));
-h_fir = impulse_response .* window;
-m_hat_t_approx = conv(mt, h_fir, 'same');
-
-envelope = abs(mt);
-
-usb_ssb_approx = mt.*cos(2*pi*fc*t) - m_hat_t_approx.*sin(2*pi*fc*t);
-
-lsb_ssb_approx = mt.*cos(2*pi*fc*t) + m_hat_t_approx.*sin(2*pi*fc*t);
+envelope_ssb = abs(hilbert(m_t));
+s_USB = m_t .* cos(2*pi*fc*t) - m_hilbert .* sin(2*pi*fc*t);
+s_LSB = m_t .* cos(2*pi*fc*t) + m_hilbert .* sin(2*pi*fc*t);
+%envelope_USB = abs(s_USB + 1i * hilbert(s_USB));
 
 figure;
 
 subplot(5,1,1);
-plot(t, mt);
-xlabel('時間 (秒)');
-ylabel('m(t)');
-title('(a) 訊息信號');
+plot(t, m_t);
+title('Message signal m(t)');
+xlabel('Time (s)');
+ylabel('Amplitude');
 grid on;
 
 subplot(5,1,2);
-plot(t, m_hat_t_approx);
-xlabel('時間 (秒)');
-ylabel('$\hat{m}(t)_{approx}$', 'Interpreter','latex');
-title('(b) 希爾伯特轉換');
+plot(t, m_hilbert);
+title('Hilbert transform of the message signal.'); 
+xlabel('Time (s)');
+ylabel('Amplitude');
 grid on;
 
 subplot(5,1,3);
-plot(t, envelope);
-xlabel('時間 (秒)');
-ylabel('|m(t)|');
-title('(c) SSB 信號的包絡');
+plot(t, envelope_ssb);
+title('Envelope of the SSB signal');
+xlabel('Time (s)');
+ylabel('Amplitude');
 grid on;
 
 subplot(5,1,4);
-plot(t, usb_ssb_approx);
-xlabel('時間 (秒)');
-ylabel('USB-SSB(t)_{approx}');
-title('(d) 近似上邊帶 SSB 信號');
+plot(t, s_USB);
+hold on;
+plot(t, m_t, 'r--');
+title('Upper-sideband SSB signal with message signal.');
+xlabel('Time (s)');
+ylabel('Amplitude');
+legend('s_{USB}(t)', 'm(t)');
 grid on;
+hold off;
 
 subplot(5,1,5);
-plot(t, lsb_ssb_approx);
-xlabel('時間 (秒)');
-ylabel('LSB-SSB(t)_{approx}');
-title('(e) 近似下邊帶 SSB 信號');
+plot(t, s_LSB);
+hold on;
+plot(t, m_t, 'r--');
+title('Lower-sideband SSB signal with message signal');
+xlabel('Time (s)');
+ylabel('Amplitude');
+legend('s_{LSB}(t)', 'm(t)');
 grid on;
+hold off;
 
-sgtitle('單邊帶 (SSB) 系統的時域信號');
+sgtitle('SSB');
