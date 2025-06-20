@@ -1,12 +1,10 @@
-clear; close all; clc;
+fdel = input('fdel:');
+fn = input('fn:');
+zeta = input('zeta:');
 
-fdel = 100;          % 頻率階躍大小 (Hz)
-fn = 10;             % 第二階自然頻率 (Hz)
-zeta = 0.707;        % 阻尼係數
-
-Kp1 = 1.0;           % 第一階比例增益
-Kp2 = 100;           % 第二階比例增益
-Ki2 = 1e4;           % 第二階積分增益
+Kp1 = input('Kp1:');
+Kp2 = input('Kp2:');
+Ki2 = input('Ki2:');
 
 npts = 2000;
 fs = 2000;
