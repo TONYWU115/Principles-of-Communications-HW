@@ -14,7 +14,7 @@ nsettle = fix(npts/10);
 
 Kt = 4*pi*zeta*fn; % 迴路增益
 a = pi*fn/zeta;    % 二階濾波器參數
-b = (pi*fn)^2;     % 三階積分器參數，可調整
+b = (pi*fn)^2;     % 三階積分器參數
 
 filt_in_last = 0;
 filt_out_last = 0;
@@ -52,7 +52,7 @@ for i=1:npts
 
     phierror(i) = s1;         % 相位誤差
     fvco(i) = vco_in/(2*pi);  % VCO輸出頻率
-    freqerror(i) = fin(i)-fvco(i); % 頻率誤差 (輸入頻率 - VCO輸出頻率)
+    freqerror(i) = fin(i)-fvco(i);
 end
 
 kk = 0;
