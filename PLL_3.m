@@ -1,67 +1,80 @@
-fdel = input('fdel:');
-fn = input('fn:');
-zeta = input('zeta:');
+clear all
 
-Kp1 = input('Kp1:');
-Kp2 = input('Kp2:');
-Ki2 = input('Ki2:');
+fdel = input('Enter frequency step size in Hz > ');     % 頻率步進大小 (Hz)
+fn = input('Enter the loop natural frequency in Hz > '); % 迴路自然頻率 (Hz)
+zeta = input('Enter zeta (loop damping factor) > ');    % 迴路阻尼係數
 
 npts = 2000;
 fs = 2000;
 T = 1/fs;
-t = (0:(npts-1)) * T;
-nsettle = fix(npts / 10);
 
-fin = zeros(1,npts);
-fvco = zeros(1,npts);
-phierror = zeros(1,npts);
-freqerror = zeros(1,npts);
+t = (0:(npts-1))/fs;
 
-vco_phase = 0;
-vco_phase_last = 0;
-vco_input_last = 0;
+nsettle = fix(npts/10);
 
-int_stage2 = 0;
+Kt = 4*pi*zeta*fn; % 迴路增益
+a = pi*fn/zeta;    % 二階濾波器參數
+b = (pi*fn)^2;     % 三階積分器參數，可調整
 
-for i = 1:npts
+filt_in_last = 0;
+filt_out_last = 0;
+filt2_out_last = 0;
+vco_in_last = 0;
+vco_out = 0;
+vco_out_last = 0;
+
+for i=1:npts
     if i < nsettle
         fin(i) = 0;
-        phase_input = 0;
+        phin(i) = 0;
     else
         fin(i) = fdel;
-        phase_input = 2*pi*fdel*T*(i - nsettle);
+        phin(i) = 2*pi*fdel*T*(i-nsettle);
     end
 
-    phase_err = phase_input - vco_phase;
-    pd_output = sin(phase_err);
+    s1 = phin(i) - vco_out;
+    s2 = sin(s1);
+    s3 = Kt*s2;
 
-    stage1_output = Kp1 * pd_output;
+    filt_in = a*s3;
+    filt_out = filt_out_last + (T/2)*(filt_in + filt_in_last);
+    filt_in_last = filt_in;
+    filt_out_last = filt_out;
 
-    int_stage2 = int_stage2 + Ki2 * stage1_output * T;
-    stage2_output = Kp2 * stage1_output + int_stage2;
+    filt2_in = b*s3;
+    filt2_out = filt2_out_last + (T/2)*(filt2_in + filt2_out_last);
+    filt2_out_last = filt2_out;
 
-    vco_input = stage2_output;
-    vco_phase = vco_phase_last + (T/2) * (vco_input + vco_input_last);
+    vco_in = s3 + filt_out + filt2_out;
+    vco_out = vco_out_last + (T/2)*(vco_in + vco_in_last);
+    vco_in_last = vco_in;
+    vco_out_last = vco_out;
 
-    vco_input_last = vco_input;
-    vco_phase_last = vco_phase;
-
-    phierror(i) = phase_err;
-    fvco(i) = vco_input / (2*pi);
-    freqerror(i) = fin(i) - fvco(i);
+    phierror(i) = s1;         % 相位誤差
+    fvco(i) = vco_in/(2*pi);  % VCO輸出頻率
+    freqerror(i) = fin(i)-fvco(i); % 頻率誤差 (輸入頻率 - VCO輸出頻率)
 end
 
-figure;
-plot(t, fin, 'b', t, fvco, 'r');
-title('Input Frequency vs VCO Output Frequency');
-xlabel('Time (s)');
-ylabel('Frequency (Hz)');
-legend('Input Frequency', 'VCO Output');
-grid on;
+kk = 0;
+while kk == 0
+    k = menu('Phase Lock Loop Postprocessor',...
+             'Input Frequency and VCO Frequency',...
+             'Phase Plane Plot',...
+             'Exit Program');
 
-figure;
-plot(phierror / (2*pi), freqerror, 'k');
-title('Phase Plane (Phase Error vs Frequency Error)');
-xlabel('Phase Error / 2\pi');
-ylabel('Frequency Error (Hz)');
-grid on;
+    if k == 1
+        plot(t,fin,t,fvco);
+        title('Input Frequency and VCO Frequency');
+        xlabel('Time - Seconds');
+        ylabel('Frequency - Hertz');
+        pause;
+    elseif k == 2
+        plot(phierror/2/pi,freqerror);
+        title('Phase Plane');
+        xlabel('Phase Error / pi');
+        ylabel('Frequency Error - Hz');
+        pause;
+    elseif k == 3
+        kk = 1;
+    end
+end
